@@ -1,14 +1,20 @@
 #!/bin/bash
-# filepath: d:\downloader_by_type.sh
+# filepath: d:\crazycurl.sh
 
 print_usage() {
-  echo "Usage: $0 -l <urlsfile>"
+  echo -e "\033[1;36mUsage: $0 -l <urlsfile> [-q]\033[0m"
   exit 1
 }
 
-while getopts "l:" opt; do
+# Banner
+echo -e "\n\033[1;44;97m========== CRAZYCURL FILE DOWNLOADER ==========\033[0m\n"
+
+quiet=0
+
+while getopts "l:q" opt; do
   case $opt in
     l) urlsfile="$OPTARG" ;;
+    q) quiet=1 ;;
     *) print_usage ;;
   esac
 done
@@ -17,23 +23,30 @@ if [[ -z "$urlsfile" ]]; then
   print_usage
 fi
 
-# Directories for extensions/types
+base_dir="crazyfile"
 dirs=(conf config bak backup db py php bkp cache csv html sql tar tar.gz txt zip log xml js)
 
+mkdir -p "$base_dir"
 for d in "${dirs[@]}"; do
-  mkdir -p "$d"
+  mkdir -p "$base_dir/$d"
 done
-mkdir -p other
+mkdir -p "$base_dir/other"
+
+total=0
+success=0
+fail=0
+
+# Sensitive keywords for -q mode
+sensitive_keywords="user|admin|key|secret|pass|token|credential|private|auth|root|login|confidential|access|pw|pwd|env|config"
 
 while read -r line; do
-  url=$(echo "$line" | awk '{print $3}')
+  url=$(echo "$line" | grep -oE 'https?://[^ ]+')
   [[ -z "$url" ]] && continue
 
   filename=$(basename "$url" | sed 's/[?&#%:]/_/g')
   ext="${filename##*.}"
   ext_lc="${ext,,}"
 
-  # Map extension to directory
   case "$ext_lc" in
     conf) dir="conf" ;;
     config) dir="config" ;;
@@ -57,7 +70,6 @@ while read -r line; do
     *) dir="other" ;;
   esac
 
-  # Special handling for double extensions (e.g., .tar.gz, .sql.gz)
   if [[ "$filename" =~ \.tar\.gz$ ]]; then
     dir="tar.gz"
   elif [[ "$filename" =~ \.sql$ ]]; then
@@ -66,20 +78,38 @@ while read -r line; do
     dir="txt"
   fi
 
-  # Download file to the appropriate directory
-  outpath="${dir}/${filename}"
+  ((total++))
+  outpath="${base_dir}/${dir}/${filename}"
+
+  if [[ $quiet -eq 1 ]]; then
+    if echo "$url" | grep -Eiq "$sensitive_keywords"; then
+      echo -e "\033[1;41;97m[SENSITIVE] $url\033[0m"
+    fi
+    continue
+  fi
+
   curl -sS -O -J -L "$url" --output "$outpath"
   if [[ $? -eq 0 ]]; then
-    echo -e "\033[0;32mDownloaded $filename to $dir/\033[0m"
+    ((success++))
+    echo -e "\033[0;32m[OK] Downloaded $filename to $base_dir/$dir/\033[0m"
     # Extract if zip or tar or tar.gz
     if [[ "$dir" == "zip" && "$filename" =~ \.zip$ ]]; then
-      unzip -o "$outpath" -d "$dir" && echo -e "\033[0;36mExtracted $filename in $dir/\033[0m"
+      unzip -o "$outpath" -d "$base_dir/$dir" && echo -e "\033[1;36m[EXTRACTED] $filename in $base_dir/$dir/\033[0m"
     elif [[ "$dir" == "tar" && "$filename" =~ \.tar$ ]]; then
-      tar -xf "$outpath" -C "$dir" && echo -e "\033[0;36mExtracted $filename in $dir/\033[0m"
+      tar -xf "$outpath" -C "$base_dir/$dir" && echo -e "\033[1;36m[EXTRACTED] $filename in $base_dir/$dir/\033[0m"
     elif [[ "$dir" == "tar.gz" && "$filename" =~ \.tar\.gz$ ]]; then
-      tar -xzf "$outpath" -C "$dir" && echo -e "\033[0;36mExtracted $filename in $dir/\033[0m"
+      tar -xzf "$outpath" -C "$base_dir/$dir" && echo -e "\033[1;36m[EXTRACTED] $filename in $base_dir/$dir/\033[0m"
     fi
   else
-    echo -e "\033[0;31mFailed to download $url\033[0m"
+    ((fail++))
+    echo -e "\033[0;31m[FAIL] Failed to download $url\033[0m"
   fi
 done < "$urlsfile"
+
+if [[ $quiet -eq 0 ]]; then
+  echo -e "\n\033[1;44;97m================== SUMMARY ==================\033[0m"
+  echo -e "\033[1;36mTotal attempted: $total\033[0m"
+  echo -e "\033[0;32mSuccessful: $success\033[0m"
+  echo -e "\033[0;31mFailed: $fail\033[0m"
+  echo -e "\033[1;44;97m=============================================\033[0m\n"
+fi
