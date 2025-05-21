@@ -7,8 +7,8 @@ A Bash script to **automate downloading and sorting files from a list of URLs**â
 ## Installtion
 - git clone https://github.com/0x3bdalla/Tools.git
 - cd tools
-- chmod +x crazycurl
-- cp crazycurl /usr/local/bin
+- chmod +x crazycurl.sh
+- cp crazycurl.sh  /usr/local/bin
 
 ---
 
