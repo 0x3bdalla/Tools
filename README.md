@@ -1,10 +1,10 @@
 # crazycurl
 
 ## Installtion
-- git clone https://github.com/0x3bdalla/Tools.git
-- cd tools
+- git clone https://github.com/0xaExe/crazycurl.git
+- cd crazycurl
 - chmod +x crazycurl.sh
-- cp crazycurl.sh  /usr/local/bin
+- sudo mv crazycurl.sh /usr/local/bin/crazycurl
 
 ---
 
