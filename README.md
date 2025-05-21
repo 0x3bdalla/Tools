@@ -1,9 +1,5 @@
 # crazycurl
 
-A Bash script to **automate downloading and sorting files from a list of URLs**—even if the URLs are buried in noisy lines.  
-
----
-
 ## Installtion
 - git clone https://github.com/0x3bdalla/Tools.git
 - cd tools
