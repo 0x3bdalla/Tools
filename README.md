@@ -7,6 +7,9 @@
 - sudo mv crazycurl.sh /usr/local/bin/crazycurl
 
 ---
+## 🚨 Attention.
+  - `make folder and run the script in because adding in dirs usually not working, I'm afraid I'll ruin your work path` 
+---
 
 ## Why use this tool?
 
