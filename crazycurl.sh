@@ -22,6 +22,28 @@ download() {
   curl -sSL "$url" --output "$outpath"
 }
 
+sanitize_filenames() {
+  echo "[*] Renaming hidden and backup-style files..."
+  cd "$outputdir" || return
+
+  # Rename files that start with a dot
+  for f in .[^.]*; do
+    [[ -e "$f" ]] || continue
+    newname="${f#.}"
+    mv "$f" "$newname"
+  done
+
+  # Rename files that end with ~
+  for f in *~; do
+    [[ -e "$f" ]] || continue
+    newname="${f%~}"
+    mv "$f" "$newname"
+  done
+
+  cd - >/dev/null
+}
+
+
 if [[ "$1" == "-l" && -n "$2" ]]; then
   while IFS= read -r url; do
     url=$(echo "$url" | grep -oE 'https?://[^ ]+')
